@@ -32,8 +32,16 @@ data class SettingsUiState(
     val kernelUmountStatus: String = "",
     val isKernelUmountEnabled: Boolean = false,
 
+    // SU Log
+    val sulogStatus: String = "",
+    val isSulogEnabled: Boolean = false,
+
     // Umount Modules
     val isDefaultUmountModules: Boolean = false,
+
+    // ADB Root
+    val adbRootStatus: String = "",
+    val isAdbRootEnabled: Boolean = false,
 
     val isLkmMode: Boolean = false,
     val isLateLoadMode: Boolean = false,
@@ -51,6 +59,8 @@ data class SettingsScreenActions(
     val onOpenProfileTemplate: () -> Unit,
     val onSetSuCompatMode: (Int) -> Unit,
     val onSetKernelUmountEnabled: (Boolean) -> Unit,
+    val onSetSulogEnabled: (Boolean) -> Unit,
+    val onSetAdbRootEnabled: (Boolean) -> Unit,
     val onSetDefaultUmountModules: (Boolean) -> Unit,
     val onSetEnableWebDebugging: (Boolean) -> Unit,
     val onSetAutoJailbreak: (Boolean) -> Unit,
@@ -59,5 +69,4 @@ data class SettingsScreenActions(
     val onOpenTools: () -> Unit,
     val onOpenKpm: () -> Unit,
     val onOpenSusfsConfig: () -> Unit,
-    val onOpenSulog: () -> Unit,
 )

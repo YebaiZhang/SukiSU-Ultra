@@ -51,6 +51,7 @@ import dev.chrisbanes.haze.hazeSource
 import com.sukisu.ultra.KernelVersion
 import com.sukisu.ultra.R
 import com.sukisu.ultra.ui.component.dialog.rememberConfirmDialog
+import com.sukisu.ultra.ui.component.miuix.WarningCard
 import com.sukisu.ultra.ui.component.rebootlistpopup.RebootListPopupMiuix
 import com.sukisu.ultra.ui.theme.LocalEnableBlur
 import com.sukisu.ultra.ui.theme.isInDarkTheme
@@ -129,7 +130,8 @@ fun HomePagerMiuix(
                     }
                     if (state.showVersionMismatchWarning) {
                         WarningCard(
-                            stringResource(id = R.string.home_version_mismatch,
+                            stringResource(
+                                id = R.string.home_version_mismatch,
                                 state.currentManagerVersionCode,
                                 state.ksuVersion ?: 0
                             )
@@ -137,8 +139,10 @@ fun HomePagerMiuix(
                     }
                     if (state.showRequireKernelWarning) {
                         WarningCard(
-                            stringResource(id = R.string.require_kernel_version,
-                                state.ksuVersion ?: 0, com.sukisu.ultra.Natives.MINIMAL_SUPPORTED_KERNEL),
+                            stringResource(
+                                id = R.string.require_kernel_version,
+                                state.ksuVersion ?: 0, com.sukisu.ultra.Natives.MINIMAL_SUPPORTED_KERNEL
+                            ),
                         )
                     }
                     if (state.showRootWarning) {
@@ -432,38 +436,6 @@ private fun StatusCard(
 }
 
 @Composable
-private fun WarningCard(
-    message: String,
-    color: Color? = null,
-    onClick: (() -> Unit)? = null,
-) {
-    Card(
-        onClick = { onClick?.invoke() },
-        colors = CardDefaults.defaultColors(
-            color = color ?: when {
-                isDynamicColor -> colorScheme.errorContainer
-                isInDarkTheme() -> Color(0XFF310808)
-                else -> Color(0xFFF8E2E2)
-            }
-        ),
-        showIndication = onClick != null,
-        pressFeedbackType = PressFeedbackType.Tilt
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-        ) {
-            Text(
-                text = message,
-                color = if (isDynamicColor) colorScheme.onErrorContainer else Color(0xFFF72727),
-                fontSize = 14.sp
-            )
-        }
-    }
-}
-
-@Composable
 private fun LearnMoreCard(
     onOpenUrl: (String) -> Unit,
 ) {
@@ -540,6 +512,7 @@ private fun InfoCard(systemInfo: SystemInfo) {
         ) {
             InfoText(title = stringResource(R.string.home_kernel), content = systemInfo.kernelVersion)
             InfoText(title = stringResource(R.string.home_manager_version), content = systemInfo.managerVersion)
+            InfoText(title = stringResource(R.string.home_kernel_full_version), content = systemInfo.kernelFullVersion)
             if (isSusfsSupported) {
                 InfoText(title = stringResource(R.string.home_susfs_version), content = susfsInfo.detail)
             } else {
@@ -554,6 +527,17 @@ private fun InfoCard(systemInfo: SystemInfo) {
             InfoText(
                 title = stringResource(R.string.home_selinux_status),
                 content = selinuxDisplay,
+            )
+            val seccompDisplay = when (systemInfo.seccompStatus) {
+                -1 -> stringResource(R.string.seccomp_status_not_supported)
+                0 -> stringResource(R.string.seccomp_status_disabled)
+                1 -> stringResource(R.string.seccomp_status_strict)
+                2 -> stringResource(R.string.seccomp_status_filter)
+                else -> stringResource(R.string.seccomp_status_unknown)
+            }
+            InfoText(
+                title = stringResource(R.string.home_seccomp_status),
+                content = seccompDisplay,
             )
             InfoText(
                 title = stringResource(R.string.home_fingerprint),
@@ -600,8 +584,10 @@ private fun StatusCardJailbreakPreview() {
 private val previewSystemInfo = SystemInfo(
     kernelVersion = "6.1.0-android14-0-g1234567",
     managerVersion = "1.0.0 (10000)",
+    kernelFullVersion = "v4.1.2-abc1234@main",
     fingerprint = "google/raven/raven:14/AP1A.240305.019:user/release-keys",
-    selinuxStatus = "Enforcing"
+    selinuxStatus = "Enforcing",
+    seccompStatus = 2
 )
 
 private val previewUriHandler = object : UriHandler {
