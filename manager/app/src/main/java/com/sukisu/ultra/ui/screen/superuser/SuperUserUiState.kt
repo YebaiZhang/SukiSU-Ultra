@@ -2,6 +2,7 @@ package com.sukisu.ultra.ui.screen.superuser
 
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
+import androidx.compose.ui.graphics.Color
 import com.sukisu.ultra.data.model.AppInfo
 import com.sukisu.ultra.ui.component.SearchStatus
 
@@ -20,6 +21,7 @@ data class GroupedApps(
 @Stable
 data class SuperUserUiState(
     val isRefreshing: Boolean = false,
+    val hasLoaded: Boolean = false,
     val groupedApps: List<GroupedApps> = emptyList(),
     val userIds: List<Int> = emptyList(),
     val searchStatus: SearchStatus = SearchStatus(""),
@@ -32,10 +34,18 @@ data class SuperUserUiState(
 @Immutable
 data class SuperUserActions(
     val onRefresh: () -> Unit,
+    val onOpenSulog: () -> Unit,
     val onSearchTextChange: (String) -> Unit,
     val onSearchStatusChange: (SearchStatus) -> Unit,
     val onClearSearch: () -> Unit,
     val onToggleShowSystemApps: () -> Unit,
     val onToggleShowOnlyPrimaryUserApps: () -> Unit,
     val onOpenProfile: (GroupedApps) -> Unit,
+)
+
+@Immutable
+data class StatusMeta(
+    val label: String,
+    val bg: Color,
+    val fg: Color
 )

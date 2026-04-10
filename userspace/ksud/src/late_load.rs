@@ -34,7 +34,8 @@ fn dump_process_info(label: &str) {
     );
 }
 
-pub fn run() -> Result<()> {
+pub fn run(package_name: &String, kmi: Option<String>) -> Result<()> {
+    utils::daemonize(false)?;
     info!("late-load command triggered!");
     dump_process_info("late-load start");
 
@@ -43,8 +44,10 @@ pub fn run() -> Result<()> {
         info!("KernelSU already loaded, skip loading ko");
     } else {
         // 2. Detect current KMI version
-        let kmi =
-            crate::boot_patch::get_current_kmi().context("Failed to detect current KMI version")?;
+        let kmi = kmi.map_or_else(
+            || crate::boot_patch::get_current_kmi().context("Failed to detect current KMI version"),
+            Ok,
+        )?;
         info!("Detected KMI: {kmi}");
 
         // 3. Get kernelsu.ko from embedded assets
@@ -59,13 +62,17 @@ pub fn run() -> Result<()> {
         dump_process_info("after load_module");
     }
 
+    // We need to reset stdin/stdout/stderr; otherwise, sending file descriptors via cmd transactions
+    // will be blocked by SELinux because its fsec->sid is still u:r:su:s0 instead of u:r:ksu:s0.
+    utils::reset_std()?;
+
     utils::umask(0);
 
     if let Err(e) = crate::module_config::clear_all_temp_configs() {
         warn!("clear temp configs failed: {e}");
     }
 
-    utils::install(None).context("Failed to install ksud")?;
+    utils::install(None, None).context("Failed to install ksud")?;
 
     // 5. Handle module updates
     if let Err(e) = handle_updated_modules() {
@@ -117,11 +124,16 @@ pub fn run() -> Result<()> {
     init_event::run_stage("boot-completed", false);
 
     // 14. Restart Manager so it gets a fresh ksu fd from the newly loaded kernel module
-    info!("Restarting KernelSU Manager...");
-    let pkg = "com.sukisu.ultra";
-    let _ = Command::new("am").args(["force-stop", pkg]).status();
+    info!("Restarting KernelSU Manager {package_name}...");
     let _ = Command::new("am")
-        .args(["start", "-n", &format!("{pkg}/.ui.MainActivity")])
+        .args(["force-stop", package_name])
+        .status();
+    let _ = Command::new("am")
+        .args([
+            "start",
+            "-n",
+            &format!("{package_name}/com.sukisu.ultra.ui.MainActivity"),
+        ])
         .status();
 
     Ok(())
