@@ -5,7 +5,6 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -26,8 +25,6 @@ import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
@@ -38,13 +35,11 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.material3.rememberTopAppBarState
-import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.UriHandler
@@ -56,6 +51,7 @@ import androidx.compose.ui.unit.dp
 import com.sukisu.ultra.KernelVersion
 import com.sukisu.ultra.R
 import com.sukisu.ultra.ui.component.dialog.rememberConfirmDialog
+import com.sukisu.ultra.ui.component.material.TonalCard
 import com.sukisu.ultra.ui.component.rebootlistpopup.RebootListPopup
 import com.sukisu.ultra.ui.component.statustag.StatusTag
 
@@ -152,7 +148,7 @@ private fun UpdateCard(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun TopBar(
     scrollBehavior: TopAppBarScrollBehavior? = null
@@ -180,12 +176,16 @@ private fun StatusCard(
                 MaterialTheme.colorScheme.secondaryContainer
             } else {
                 MaterialTheme.colorScheme.errorContainer
+            },
+            onClick = {
+                if (!state.isLateLoadMode) {
+                    actions.onInstallClick()
+                }
             }
         ) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable(enabled = !state.isLateLoadMode) { actions.onInstallClick() }
                     .padding(24.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -289,11 +289,13 @@ private fun StatusCard(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                TonalCard(modifier = Modifier.weight(1f)) {
+                TonalCard(
+                    modifier = Modifier.weight(1f),
+                    onClick = actions.onSuperuserClick
+                ) {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable { actions.onSuperuserClick() }
                             .padding(horizontal = 24.dp, vertical = 16.dp)
                     ) {
                         Text(
@@ -310,11 +312,13 @@ private fun StatusCard(
                         )
                     }
                 }
-                TonalCard(modifier = Modifier.weight(1f)) {
+                TonalCard(
+                    modifier = Modifier.weight(1f),
+                    onClick = actions.onModuleClick
+                ) {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable { actions.onModuleClick() }
                             .padding(horizontal = 24.dp, vertical = 16.dp)
                     ) {
                         Text(
@@ -342,42 +346,29 @@ private fun WarningCard(
     color: Color = MaterialTheme.colorScheme.error,
     onClick: (() -> Unit)? = null
 ) {
-    TonalCard(containerColor = color) {
+    val content = @Composable {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .then(onClick?.let { Modifier.clickable { it() } } ?: Modifier)
                 .padding(24.dp)
         ) {
             Text(text = message, style = MaterialTheme.typography.bodyMedium)
         }
     }
-}
-
-@Composable
-fun TonalCard(
-    modifier: Modifier = Modifier,
-    containerColor: Color = MaterialTheme.colorScheme.surfaceColorAtElevation(1.dp),
-    shape: Shape = MaterialTheme.shapes.large,
-    content: @Composable () -> Unit
-) {
-    Card(
-        modifier = modifier,
-        colors = CardDefaults.cardColors(containerColor = containerColor),
-        shape = shape
-    ) {
-        content()
+    if (onClick != null) {
+        TonalCard(containerColor = color, onClick = onClick, content = content)
+    } else {
+        TonalCard(containerColor = color, content = content)
     }
 }
 
 @Composable
 private fun LearnMoreCard(onOpenUrl: (String) -> Unit) {
     val url = stringResource(R.string.home_learn_kernelsu_url)
-    TonalCard {
+    TonalCard(onClick = { onOpenUrl(url) }) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable { onOpenUrl(url) }
                 .padding(24.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -396,11 +387,10 @@ private fun LearnMoreCard(onOpenUrl: (String) -> Unit) {
 
 @Composable
 private fun DonateCard(onOpenUrl: (String) -> Unit) {
-    TonalCard {
+    TonalCard(onClick = { onOpenUrl("https://patreon.com/weishu") }) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable { onOpenUrl("https://patreon.com/weishu") }
                 .padding(24.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -446,6 +436,8 @@ private fun InfoCard(systemInfo: SystemInfo) {
             Spacer(Modifier.height(16.dp))
             InfoCardItem(stringResource(R.string.home_manager_version), systemInfo.managerVersion)
             Spacer(Modifier.height(16.dp))
+            InfoCardItem(stringResource(R.string.home_kernel_full_version), systemInfo.kernelFullVersion)
+            Spacer(Modifier.height(16.dp))
             if (isSusfsSupported) {
                 InfoCardItem(
                     stringResource(R.string.home_susfs_version),
@@ -465,6 +457,16 @@ private fun InfoCard(systemInfo: SystemInfo) {
                 else -> stringResource(R.string.selinux_status_unknown)
             }
             InfoCardItem(stringResource(R.string.home_selinux_status), selinuxDisplay)
+
+            Spacer(Modifier.height(16.dp))
+            val seccompDisplay = when (systemInfo.seccompStatus) {
+                -1 -> stringResource(R.string.seccomp_status_not_supported)
+                0 -> stringResource(R.string.seccomp_status_disabled)
+                1 -> stringResource(R.string.seccomp_status_strict)
+                2 -> stringResource(R.string.seccomp_status_filter)
+                else -> stringResource(R.string.seccomp_status_unknown)
+            }
+            InfoCardItem(stringResource(R.string.home_seccomp_status), seccompDisplay)
 
             Spacer(Modifier.height(16.dp))
             InfoCardItem(stringResource(R.string.home_fingerprint), systemInfo.fingerprint)
@@ -508,8 +510,10 @@ private fun StatusCardJailbreakPreview() {
 private val previewSystemInfo = SystemInfo(
     kernelVersion = "6.1.0-android14-0-g1234567",
     managerVersion = "1.0.0 (10000)",
+    kernelFullVersion = "v4.1.2-abc1234@main",
     fingerprint = "google/raven/raven:14/AP1A.240305.019:user/release-keys",
-    selinuxStatus = "Enforcing"
+    selinuxStatus = "Enforcing",
+    seccompStatus = 2
 )
 
 private val previewUriHandler = object : UriHandler {

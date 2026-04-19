@@ -50,7 +50,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
@@ -324,7 +326,7 @@ private fun AppProfileInner(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun TopBar(
     onBack: () -> Unit,
@@ -336,6 +338,7 @@ private fun TopBar(
     onForceStopApp: (String, Int) -> Unit,
     onRestartApp: (String, Int) -> Unit,
 ) {
+    val haptic = LocalHapticFeedback.current
     LargeFlexibleTopAppBar(
         title = { Text(stringResource(R.string.profile)) },
         navigationIcon = {
@@ -361,6 +364,7 @@ private fun TopBar(
                         DropdownMenuItem(
                             text = { Text(stringResource(id = R.string.launch_app)) },
                             onClick = {
+                                haptic.performHapticFeedback(HapticFeedbackType.VirtualKey)
                                 showDropdown = false
                                 onLaunchApp(packageName, userId)
                             },
@@ -368,6 +372,7 @@ private fun TopBar(
                         DropdownMenuItem(
                             text = { Text(stringResource(id = R.string.force_stop_app)) },
                             onClick = {
+                                haptic.performHapticFeedback(HapticFeedbackType.VirtualKey)
                                 showDropdown = false
                                 onForceStopApp(packageName, userId)
                             },
@@ -375,6 +380,7 @@ private fun TopBar(
                         DropdownMenuItem(
                             text = { Text(stringResource(id = R.string.restart_app)) },
                             onClick = {
+                                haptic.performHapticFeedback(HapticFeedbackType.VirtualKey)
                                 showDropdown = false
                                 onRestartApp(packageName, userId)
                             },
@@ -399,6 +405,7 @@ private fun ProfileBox(
     hasTemplate: Boolean,
     onModeChange: (Mode) -> Unit,
 ) {
+    val haptic = LocalHapticFeedback.current
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -414,8 +421,11 @@ private fun ProfileBox(
         options.forEachIndexed { index, (m, label) ->
             ToggleButton(
                 checked = mode == m,
-                onCheckedChange = {
-                    if (m != Mode.Template || hasTemplate) onModeChange(m)
+                onCheckedChange = { checked ->
+                    if (checked && (m != Mode.Template || hasTemplate)) {
+                        haptic.performHapticFeedback(HapticFeedbackType.VirtualKey)
+                        onModeChange(m)
+                    }
                 },
                 enabled = if (m == Mode.Template) hasTemplate else true,
                 modifier = Modifier

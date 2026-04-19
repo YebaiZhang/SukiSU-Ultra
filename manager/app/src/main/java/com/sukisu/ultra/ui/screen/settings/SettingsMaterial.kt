@@ -11,7 +11,9 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Article
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Adb
 import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.ContactPage
 import androidx.compose.material.icons.filled.Delete
@@ -26,7 +28,6 @@ import androidx.compose.material.icons.filled.Update
 import androidx.compose.material.icons.rounded.Android
 import androidx.compose.material.icons.rounded.Dashboard
 import androidx.compose.material.icons.rounded.UploadFile
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LargeFlexibleTopAppBar
@@ -63,7 +64,6 @@ import com.sukisu.ultra.ui.util.LocalSnackbarHost
  * @author weishu
  * @date 2023/1/1.
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingPagerMaterial(
     uiState: SettingsUiState,
@@ -75,7 +75,7 @@ fun SettingPagerMaterial(
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
     val snackBarHost = LocalSnackbarHost.current
     val showUninstallDialog = rememberSaveable { mutableStateOf(false) }
-    var showBottomsheet by remember { mutableStateOf(false) }
+    var showBottomSheet by remember { mutableStateOf(false) }
 
     UninstallDialog(
         show = showUninstallDialog.value,
@@ -84,9 +84,7 @@ fun SettingPagerMaterial(
 
     Scaffold(
         topBar = {
-            TopBar(
-                scrollBehavior = scrollBehavior
-            )
+            TopBar(scrollBehavior = scrollBehavior)
         },
         snackbarHost = { SnackbarHost(snackBarHost) },
         contentWindowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal)
@@ -288,6 +286,42 @@ fun SettingPagerMaterial(
                             )
                         },
                         {
+                            val sulogSummary = when (uiState.sulogStatus) {
+                                "unsupported" -> stringResource(id = R.string.feature_status_unsupported_summary)
+                                "managed" -> stringResource(id = R.string.feature_status_managed_summary)
+                                else -> stringResource(id = R.string.settings_sulog_summary)
+                            }
+                            SegmentedSwitchItem(
+                                icon = Icons.AutoMirrored.Filled.Article,
+                                title = stringResource(id = R.string.settings_sulog),
+                                summary = sulogSummary,
+                                enabled = uiState.sulogStatus == "supported",
+                                checked = uiState.isSulogEnabled,
+                                onCheckedChange = actions.onSetSulogEnabled
+                            )
+                        },
+                        {
+                            val adbRootSummary = when (uiState.adbRootStatus) {
+                                "unsupported" -> stringResource(id = R.string.feature_status_unsupported_summary)
+                                "managed" -> stringResource(id = R.string.feature_status_managed_summary)
+                                else -> stringResource(id = R.string.settings_adb_root_summary)
+                            }
+                            SegmentedSwitchItem(
+                                icon = Icons.Filled.Adb,
+                                title = stringResource(id = R.string.settings_adb_root),
+                                summary = adbRootSummary,
+                                enabled = uiState.adbRootStatus == "supported",
+                                checked = uiState.isAdbRootEnabled,
+                                onCheckedChange = actions.onSetAdbRootEnabled
+                            )
+                        },
+                    )
+                )
+
+                SegmentedColumn(
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                    content = listOf(
+                        {
                             SegmentedSwitchItem(
                                 icon = Icons.Filled.FolderDelete,
                                 title = stringResource(id = R.string.settings_umount_modules_default),
@@ -338,28 +372,10 @@ fun SettingPagerMaterial(
 
             SegmentedColumn(
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                content = listOf (
-                    {
-                        val sulogtext = stringResource(id = R.string.settings_view_sulog)
-                        SegmentedListItem(
-                            onClick = actions.onOpenSulog,
-                            headlineContent = { Text(sulogtext) },
-                            leadingContent = {
-                                Icon(Icons.Filled.Fence,
-                                    sulogtext
-                                )
-                            },
-                        )
-                    }
-                )
-            )
-
-            SegmentedColumn(
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                 content = listOf(
                     {
                         SegmentedListItem(
-                            onClick = { showBottomsheet = true },
+                            onClick = { showBottomSheet = true },
                             headlineContent = { Text(stringResource(id = R.string.send_log)) },
                             leadingContent = {
                                 Icon(
@@ -385,15 +401,15 @@ fun SettingPagerMaterial(
             )
             Spacer(modifier = Modifier.height(8.dp))
 
-            if (showBottomsheet) {
-                SendLogBottomSheet { showBottomsheet = false }
+            if (showBottomSheet) {
+                SendLogBottomSheet { showBottomSheet = false }
             }
             Spacer(modifier = Modifier.height(bottomInnerPadding))
         }
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun TopBar(
     scrollBehavior: TopAppBarScrollBehavior? = null
